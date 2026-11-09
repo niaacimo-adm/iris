@@ -12,10 +12,15 @@ use App\Http\Controllers\RegionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\LoginOtpController;
 
 Route::redirect('/', '/login')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Login with OTP routes
+    Route::get('/login/otp', [LoginOtpController::class, 'show'])->name('login.otp.show');
+    Route::post('/login/otp', [LoginOtpController::class, 'verify'])->name('login.otp.verify');
+    Route::post('/login/otp/resend', [LoginOtpController::class, 'resend'])->name('login.otp.resend');
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     // IA profiles (permission checks live in IaProfileController: ia.view / ia.create / ia.edit / ia.delete)
     Route::get('ia-profiles/data', [IaProfileController::class, 'data'])->name('ia-profiles.data');

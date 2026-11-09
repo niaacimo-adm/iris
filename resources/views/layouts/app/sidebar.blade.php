@@ -28,8 +28,8 @@
                         </flux:sidebar.item>
                     @endif
                     </flux:sidebar.group>
-                    <flux:sidebar.group :heading="__('Settings')" class="grid">
                     @if (auth()->user()->hasPermission('user.view'))
+                    <flux:sidebar.group :heading="__('Settings')" class="grid">
                         <flux:sidebar.item icon="user-group" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>
                             {{ __('Users') }}
                         </flux:sidebar.item>

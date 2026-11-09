@@ -1,0 +1,200 @@
+/* ---------- Roles & permissions tables ----------
+   Reuses the global .ut-* classes (card, badge, buttons, skeleton bars,
+   .ut-hidden) from users-table.css, so import that file first (it already is
+   if users-table.js is imported in app.js).
+*/
+
+/* DataTables layout polish */
+.rt-wrap .dt-container {
+    font-size: 0.875rem;
+    color: rgb(39 39 42);
+}
+
+:root.dark .rt-wrap .dt-container {
+    color: rgb(228 228 231);
+}
+
+.rt-wrap .dt-container .dt-layout-row {
+    margin: 0.5rem 0;
+    gap: 0.75rem;
+}
+
+.rt-wrap .dt-container .dt-search input,
+.rt-wrap .dt-container .dt-length select {
+    border: 1px solid rgb(212 212 216);
+    border-radius: 0.5rem;
+    background: transparent;
+    color: inherit;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.rt-wrap .dt-container .dt-search input {
+    min-width: 16rem;
+}
+
+.rt-wrap .dt-container .dt-search input:focus,
+.rt-wrap .dt-container .dt-length select:focus {
+    outline: 2px solid rgb(39 39 42);
+    outline-offset: 1px;
+}
+
+:root.dark .rt-wrap .dt-container .dt-search input,
+:root.dark .rt-wrap .dt-container .dt-length select {
+    border-color: rgb(63 63 70);
+}
+
+:root.dark .rt-wrap .dt-container .dt-length select option {
+    background: rgb(24 24 27);
+}
+
+:root.dark .rt-wrap .dt-container .dt-search input:focus,
+:root.dark .rt-wrap .dt-container .dt-length select:focus {
+    outline-color: rgb(244 244 245);
+}
+
+.rt-wrap table.dataTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.rt-wrap table.dataTable thead th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgb(113 113 122);
+    border-bottom: 1px solid rgb(228 228 231);
+    padding: 0.75rem 0.75rem;
+}
+
+.rt-wrap table.dataTable tbody td {
+    padding: 0.75rem;
+    vertical-align: middle;
+    border-top: 1px solid rgb(244 244 245);
+}
+
+:root.dark .rt-wrap table.dataTable thead th {
+    color: rgb(161 161 170);
+    border-bottom-color: rgb(63 63 70);
+}
+
+:root.dark .rt-wrap table.dataTable tbody td {
+    border-top-color: rgb(39 39 42);
+}
+
+.rt-wrap .dt-container .dt-paging .dt-paging-button {
+    border-radius: 0.5rem;
+}
+
+.rt-wrap .dt-container .dt-paging .dt-paging-button.current,
+.rt-wrap .dt-container .dt-paging .dt-paging-button.current:hover {
+    background: rgb(24 24 27);
+    border-color: rgb(24 24 27);
+    color: #fff !important;
+}
+
+:root.dark .rt-wrap .dt-container .dt-paging .dt-paging-button {
+    color: rgb(228 228 231) !important;
+}
+
+:root.dark .rt-wrap .dt-container .dt-paging .dt-paging-button.current,
+:root.dark .rt-wrap .dt-container .dt-paging .dt-paging-button.current:hover {
+    background: rgb(244 244 245);
+    border-color: rgb(244 244 245);
+    color: rgb(24 24 27) !important;
+}
+
+/* Small count pill used in the Permissions / Users / Roles columns */
+.rt-count {
+    display: inline-block;
+    min-width: 1.75rem;
+    border-radius: 9999px;
+    background: rgb(244 244 245);
+    padding: 0.125rem 0.5rem;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgb(63 63 70);
+}
+
+:root.dark .rt-count {
+    background: rgb(39 39 42);
+    color: rgb(228 228 231);
+}
+
+.rt-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8125rem;
+}
+
+.rt-module {
+    display: inline-block;
+    border-radius: 9999px;
+    background: rgb(219 234 254);
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgb(30 64 175);
+}
+
+:root.dark .rt-module {
+    background: rgb(30 58 138);
+    color: rgb(191 219 254);
+}
+
+.ut-btn[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: auto;
+}
+
+.ut-btn[disabled]:hover {
+    background: transparent;
+}
+
+/* Skeleton rows (column layouts differ per table) */
+.rt-skel-row {
+    display: grid;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 0.75rem;
+    border-top: 1px solid rgb(244 244 245);
+}
+
+:root.dark .rt-skel-row {
+    border-top-color: rgb(39 39 42);
+}
+
+.rt-skel-row.is-head {
+    border-top: 0;
+    border-bottom: 1px solid rgb(228 228 231);
+}
+
+:root.dark .rt-skel-row.is-head {
+    border-bottom-color: rgb(63 63 70);
+}
+
+.rt-skel-roles {
+    grid-template-columns: 2.6fr 1.1fr 0.9fr 0.7fr 0.9fr 1.4fr;
+}
+
+.rt-skel-permissions {
+    grid-template-columns: 3fr 1fr 0.8fr 1.4fr;
+}
+
+@media (max-width: 767px) {
+    .rt-wrap {
+        overflow-x: auto;
+    }
+
+    .rt-skel-roles,
+    .rt-skel-permissions {
+        grid-template-columns: 2fr 1fr 1fr;
+    }
+
+    .rt-skel-roles > :nth-child(n + 4),
+    .rt-skel-permissions > :nth-child(n + 4) {
+        display: none;
+    }
+}

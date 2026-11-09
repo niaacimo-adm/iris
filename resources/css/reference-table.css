@@ -1,0 +1,36 @@
+/* ---------- Regions / provinces / offices tables ----------
+   Builds on users-table.css and rbac-table.css (.ut-*, .rt-*).
+*/
+
+.rt-skel-regions {
+    grid-template-columns: 3fr 1fr 1fr 1.4fr;
+}
+
+.rt-skel-provinces {
+    grid-template-columns: 2.4fr 2fr 1fr 1fr 1.4fr;
+}
+
+.rt-skel-offices {
+    grid-template-columns: 2.6fr 1.6fr 1.1fr 0.9fr 1.8fr 0.7fr 0.9fr 1.4fr;
+}
+
+/* Province codes shown inside the offices table */
+.rt-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+@media (max-width: 767px) {
+    .rt-skel-regions,
+    .rt-skel-provinces,
+    .rt-skel-offices {
+        grid-template-columns: 2fr 1fr 1fr;
+    }
+
+    .rt-skel-regions > :nth-child(n + 4),
+    .rt-skel-provinces > :nth-child(n + 4),
+    .rt-skel-offices > :nth-child(n + 4) {
+        display: none;
+    }
+}

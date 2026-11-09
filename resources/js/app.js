@@ -1,0 +1,9 @@
+import './users-table';
+import './rbac-tables';
+import './reference-tables';
+import './ia-profiles-table';
+import './ia-profile-form';
+import './ia-officers';
+import './ia-lipa';
+import './ia-archive';
+import './ia-deletion';

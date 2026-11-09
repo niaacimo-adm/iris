@@ -1,0 +1,88 @@
+@import 'tailwindcss';
+@import '../../vendor/livewire/flux/dist/flux.css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
+@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* IRIS brand palette (from the logo) */
+    --color-brand-50:  #f1fbe9;
+    --color-brand-100: #dcf5c6;
+    --color-brand-300: #8fdc4f;
+    --color-brand-500: #2fb814;
+    --color-brand-600: #1f9a10;
+    --color-brand-700: #137a12;
+    --color-brand-800: #0d5f10;
+    --color-brand-900: #084a0c;
+    --color-gold:      #ffc400;
+
+    /* Green-tinted neutrals for backgrounds, borders and the sidebar */
+    --color-zinc-50:  #f4f8f1;
+    --color-zinc-100: #e8f0e3;
+    --color-zinc-200: #d6e2cf;
+    --color-zinc-300: #b9c9b0;
+    --color-zinc-400: #8fa386;
+    --color-zinc-500: #6b7f62;
+    --color-zinc-600: #4f6148;
+    --color-zinc-700: #364434;
+    --color-zinc-800: #1a231a;
+    --color-zinc-900: #121a12;
+    --color-zinc-950: #0b110b;
+
+    /* Light mode accent */
+    --color-accent:            var(--color-brand-700);
+    --color-accent-content:    var(--color-brand-800);
+    --color-accent-foreground: #ffffff;
+}
+
+@layer theme {
+    .dark {
+        --color-accent:            var(--color-brand-500);
+        --color-accent-content:    var(--color-brand-300);
+        --color-accent-foreground: var(--color-brand-900);
+    }
+}
+
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+[data-flux-field]:not(ui-radio, ui-checkbox) {
+    @apply grid gap-2;
+}
+
+[data-flux-label] {
+    @apply !mb-0 !leading-tight;
+}
+
+input:focus[data-flux-control],
+textarea:focus[data-flux-control],
+select:focus[data-flux-control] {
+    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+}
+
+/* Keep Flux's default focus outline behavior */
+[data-flux-control]:focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+}
+
+/* Invalid input states */
+input:user-invalid[data-flux-control],
+textarea:user-invalid[data-flux-control],
+select:user-invalid[data-flux-control] {
+    @apply border-red-500;
+}
+
+/* ===== Your custom CSS goes below this line ===== */

@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IaDeletionRequestController;
 use App\Http\Controllers\IaLipaController;
+use App\Http\Controllers\IaMapController;
 use App\Http\Controllers\IaOfficerController;
 use App\Http\Controllers\IaProfileController;
 use App\Http\Controllers\OfficeController;
@@ -28,6 +29,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('ia-profiles/archived', [IaProfileController::class, 'archived'])->name('ia-profiles.archived');
     Route::get('ia-profiles/archived/data', [IaProfileController::class, 'archivedData'])->name('ia-profiles.archived.data');
     Route::post('ia-profiles/{id}/restore', [IaProfileController::class, 'restore'])->whereNumber('id')->name('ia-profiles.restore');
+    // Map of the IA service areas
+    Route::get('ia-map', [IaMapController::class, 'index'])->name('ia-map.index');
+    Route::get('ia-map/data', [IaMapController::class, 'data'])->name('ia-map.data');
     // Delete requests (must stay above the resource too)
     Route::get('ia-profiles/deletion-requests', [IaDeletionRequestController::class, 'index'])->name('ia-profiles.deletion-requests.index');
     Route::get('ia-profiles/deletion-requests/data', [IaDeletionRequestController::class, 'data'])->name('ia-profiles.deletion-requests.data');

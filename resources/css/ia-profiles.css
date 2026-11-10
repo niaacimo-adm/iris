@@ -146,3 +146,23 @@ body.ia-modal-open { overflow: hidden; }
 .ia-req-new { background: #dc2626; color: #fff; }
 .dark .ia-req-rejected { background: #dc262633; color: #fca5a5; }
 .dark .ia-req-withdrawn { background: #ffffff1a; color: #d4d4d8; }
+
+/* Dashboard bars and mini table */
+a.ia-stat { display: block; text-decoration: none; }
+a.ia-stat:hover { border-color: #16a34a; }
+.ia-bar-row { display: grid; grid-template-columns: minmax(7rem, 11rem) 1fr 3rem; align-items: center; gap: 0.6rem; padding: 0.3rem 0; font-size: 0.85rem; }
+.ia-bar-label { color: rgb(63 63 70); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dark .ia-bar-label { color: rgb(228 228 231); }
+.ia-bar-track { height: 0.6rem; border-radius: 9999px; background: rgb(244 244 245); overflow: hidden; }
+.dark .ia-bar-track { background: rgb(255 255 255 / 0.08); }
+.ia-bar-fill { height: 100%; border-radius: 9999px; background: #16a34a; min-width: 2px; }
+.ia-bar-fill.ia-bar-nis { background: #3b82f6; }
+.ia-bar-fill.ia-bar-spip { background: #f59e0b; }
+.ia-bar-fill.ia-bar-office { background: #0f766e; }
+.ia-bar-value { text-align: right; font-variant-numeric: tabular-nums; color: rgb(24 24 27); font-weight: 500; }
+.dark .ia-bar-value { color: #fff; }
+.ia-mini-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.ia-mini-table th { padding: 0.5rem 0.75rem; text-align: left; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: rgb(113 113 122); border-bottom: 1px solid rgb(228 228 231); }
+.ia-mini-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid rgb(244 244 245); color: rgb(24 24 27); }
+.dark .ia-mini-table th, .dark .ia-mini-table td { border-color: rgb(255 255 255 / 0.08); color: rgb(228 228 231); }
+.ia-mini-table .text-right { text-align: right; }

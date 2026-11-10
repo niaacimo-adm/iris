@@ -11,7 +11,7 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Main')" class="grid">
+                <flux:sidebar.group :heading="__('Platform')" class="grid">
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
@@ -21,15 +21,16 @@
                         </flux:sidebar.item>
                     @endif
                     @if (auth()->user()->hasPermission('ia.view'))
+                        <flux:sidebar.item icon="globe-asia-australia" :href="route('ia-map.index')" :current="request()->routeIs('ia-map.*')">
+                            {{ __('Map') }}
+                        </flux:sidebar.item>
                         @php($deletionBadge = \App\Models\IaDeletionRequest::badgeCount(auth()->user()))
                         <flux:sidebar.item icon="trash" :href="route('ia-profiles.deletion-requests.index')" :current="request()->routeIs('ia-profiles.deletion-requests.*')"
                                            :badge="$deletionBadge > 0 ? $deletionBadge : null" badge-color="red" wire:navigate>
                             {{ __('Deletion requests') }}
                         </flux:sidebar.item>
                     @endif
-                    </flux:sidebar.group>
                     @if (auth()->user()->hasPermission('user.view'))
-                    <flux:sidebar.group :heading="__('Settings')" class="grid">
                         <flux:sidebar.item icon="user-group" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>
                             {{ __('Users') }}
                         </flux:sidebar.item>

@@ -80,6 +80,9 @@
             <div class="flex flex-wrap items-center gap-2">
                 <flux:button variant="ghost" icon="arrow-left" :href="$archived ? route('ia-profiles.archived') : route('ia-profiles.index')" wire:navigate>{{ $archived ? __('Back to archive') : __('Back') }}</flux:button>
                 <flux:button variant="ghost" icon="table-cells" :href="route('ia-profiles.lipa.index', $profile)" wire:navigate>{{ __('LIPA records') }}</flux:button>
+                @if ($hasMap && ! $archived)
+                    <flux:button variant="ghost" icon="globe-asia-australia" :href="route('ia-map.index', ['ia' => $profile->id])">{{ __('View on map') }}</flux:button>
+                @endif
                 @if ($canRestore)
                     <button type="button" class="ut-btn" data-ia-restore-profile
                             data-url="{{ route('ia-profiles.restore', $profile->id) }}"

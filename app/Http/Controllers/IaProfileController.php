@@ -150,6 +150,7 @@ class IaProfileController extends Controller
             'canDelete'   => ! $archived && $me->hasPermission('ia.delete'),
             'canRestore'  => $archived && $me->hasPermission('ia.delete'),
             'lipaSummary' => $lipaSummary,
+            'hasMap'      => \App\Models\IaMapLot::where('ia_profile_id', $iaProfile->id)->exists(),
             'deleteMode'  => IaAccess::canApproveDeletion($me) ? 'direct' : 'request',
             'pendingDeletion' => $archived ? null : IaDeletionRequest::with('requester:id,first_name,last_name')
                 ->where('ia_profile_id', $iaProfile->id)->where('status', 'pending')->first(),

@@ -80,7 +80,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 <flux:button variant="ghost" icon="arrow-left" :href="$archived ? route('ia-profiles.archived') : route('ia-profiles.index')" wire:navigate>{{ $archived ? __('Back to archive') : __('Back') }}</flux:button>
                 <flux:button variant="ghost" icon="table-cells" :href="route('ia-profiles.lipa.index', $profile)" wire:navigate>{{ __('LIPA records') }}</flux:button>
-                @if ($hasMap && ! $archived)
+                @if ((int) $mapInfo->lots > 0 && ! $archived)
                     <flux:button variant="ghost" icon="globe-asia-australia" :href="route('ia-map.index', ['ia' => $profile->id])">{{ __('View on map') }}</flux:button>
                 @endif
                 @if ($canRestore)
@@ -144,6 +144,8 @@
                 <p class="text-sm text-zinc-500">{{ __('No LIPA records yet.') }}</p>
             @endforelse
         </section>
+
+        @include('ia-profiles._map-card')
 
         {{-- ===== Officers ===== --}}
         <section class="ia-card">

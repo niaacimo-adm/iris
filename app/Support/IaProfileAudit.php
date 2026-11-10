@@ -86,6 +86,17 @@ class IaProfileAudit
         AuditLog::record('officer_deleted', self::ENTITY, $profile->id, "Removed officer {$officer->officer_name}");
     }
 
+    public static function mapUploaded(IaProfile $profile, int $lots, float $ha, string $mode, string $fileName): void
+    {
+        AuditLog::record('updated', self::ENTITY, $profile->id, ($mode === 'add' ? 'Added' : 'Replaced the map with')
+            .' '.$lots.' lot(s), '.number_format($ha, 2)." ha, from \"{$fileName}\"");
+    }
+
+    public static function mapRemoved(IaProfile $profile, int $lots): void
+    {
+        AuditLog::record('updated', self::ENTITY, $profile->id, "Removed the service area map ({$lots} lots)");
+    }
+
     public static function restored(IaProfile $profile): void
     {
         AuditLog::record('updated', self::ENTITY, $profile->id, "Restored IA profile \"{$profile->ia_name}\" from the archive");

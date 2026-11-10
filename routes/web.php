@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IaDeletionRequestController;
 use App\Http\Controllers\IaLipaController;
 use App\Http\Controllers\IaMapController;
+use App\Http\Controllers\IaMapFileController;
 use App\Http\Controllers\IaOfficerController;
 use App\Http\Controllers\IaProfileController;
 use App\Http\Controllers\OfficeController;
@@ -25,6 +26,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     // IA profiles (permission checks live in IaProfileController: ia.view / ia.create / ia.edit / ia.delete)
     Route::get('ia-profiles/data', [IaProfileController::class, 'data'])->name('ia-profiles.data');
+       Route::post('ia-profiles/{iaProfile}/map', [IaMapFileController::class, 'store'])->name('ia-profiles.map.store');
+   Route::delete('ia-profiles/{iaProfile}/map', [IaMapFileController::class, 'destroy'])->name('ia-profiles.map.destroy');
     // The archive (must stay above the resource so "archived" is not read as a profile id)
     Route::get('ia-profiles/archived', [IaProfileController::class, 'archived'])->name('ia-profiles.archived');
     Route::get('ia-profiles/archived/data', [IaProfileController::class, 'archivedData'])->name('ia-profiles.archived.data');

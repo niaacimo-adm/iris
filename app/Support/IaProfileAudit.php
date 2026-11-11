@@ -86,15 +86,22 @@ class IaProfileAudit
         AuditLog::record('officer_deleted', self::ENTITY, $profile->id, "Removed officer {$officer->officer_name}");
     }
 
-    public static function mapUploaded(IaProfile $profile, int $lots, float $ha, string $mode, string $fileName): void
+    public static function mapUploaded(IaProfile $profile, int $lots, float $ha, string $mode, string $fileName, int $network = 0, float $canalKm = 0): void
     {
-        AuditLog::record('updated', self::ENTITY, $profile->id, ($mode === 'add' ? 'Added' : 'Replaced the map with')
-            .' '.$lots.' lot(s), '.number_format($ha, 2)." ha, from \"{$fileName}\"");
+        $what = [];
+        if ($lots > 0) {
+            $what[] = ($mode === 'add' ? 'added ' : 'replaced the lots with ').$lots.' lot(s), '.number_format($ha, 2).' ha';
+        }
+        if ($network > 0) {
+            $what[] = 'set the canal network ('.$network.' items, '.number_format($canalKm, 2).' km of canal)';
+        }
+
+        AuditLog::record('updated', self::ENTITY, $profile->id, 'Map: '.implode('; ', $what)." from \"{$fileName}\"");
     }
 
-    public static function mapRemoved(IaProfile $profile, int $lots): void
+    public static function mapRemoved(IaProfile $profile, int $lots, int $network = 0): void
     {
-        AuditLog::record('updated', self::ENTITY, $profile->id, "Removed the service area map ({$lots} lots)");
+        AuditLog::record('updated', self::ENTITY, $profile->id, "Removed the service area map ({$lots} lots, {$network} canal network items)");
     }
 
     public static function restored(IaProfile $profile): void

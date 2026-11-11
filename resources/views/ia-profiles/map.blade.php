@@ -19,6 +19,8 @@
         .iamap-pop h4 { margin: 0 0 0.15rem; font-size: 0.92rem; font-weight: 600; }
         .iamap-pop .muted { color: #71717a; }
         .iamap-pop a { color: #15803d; font-weight: 600; }
+        .iamap-label { background: none; border: 0; pointer-events: none; }
+        .iamap-label span { display: inline-block; transform: translate(-50%, -50%); white-space: nowrap; font-size: 0.72rem; font-weight: 700; color: #111827; text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 0 3px #fff; }
         .iamap-msg { position: absolute; inset: 0; z-index: 800; display: flex; align-items: center; justify-content: center; text-align: center; padding: 1rem; background: rgb(255 255 255 / 0.8); border-radius: 0.75rem; font-size: 0.9rem; color: #3f3f46; }
         .iamap-msg[hidden] { display: none; }
         .dark .iamap-msg { background: rgb(24 24 27 / 0.85); color: #e4e4e7; }
@@ -28,7 +30,7 @@
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
                 <flux:heading size="xl">{{ __('IA service area map') }}</flux:heading>
-                <flux:subheading>{{ __('Lots of each IA, from the Albay CIS shapefile (Dec 2025). Click a lot for details.') }}</flux:subheading>
+                <flux:subheading>{{ __('Service-area lots (Albay CIS shapefile, Dec 2025) and uploaded canal networks. Click a lot, canal or structure for details.') }}</flux:subheading>
             </div>
             <flux:button variant="ghost" icon="building-office-2" :href="route('ia-profiles.index')" wire:navigate>{{ __('IA Profiles') }}</flux:button>
         </div>
@@ -52,13 +54,28 @@
                 <option value="ia">{{ __('Colour: IA status') }}</option>
                 <option value="system">{{ __('Colour: system') }}</option>
             </select>
+            <select id="map-labels" class="iamap-select" title="{{ __('Lot labels (zoom in)') }}">
+                <option value="">{{ __('Labels: none') }}</option>
+                <option value="area">{{ __('Labels: lot area (ha)') }}</option>
+                <option value="number">{{ __('Labels: lot number') }}</option>
+                <option value="both">{{ __('Labels: number + area') }}</option>
+            </select>
             <button type="button" id="map-reset" class="ut-btn">{{ __('Reset') }}</button>
+        </div>
+
+        <div class="iamap-bar" id="map-layers" style="font-size:.85rem" hidden>
+            <strong>{{ __('Canal network') }}:</strong>
+            <label><input type="checkbox" data-net="canal" checked> {{ __('Canals') }}</label>
+            <label><input type="checkbox" data-net="structure" checked> {{ __('Structures') }} <span class="ut-sub">({{ __('zoom in') }})</span></label>
+            <label><input type="checkbox" data-net="dam" checked> {{ __('Dams / intakes') }}</label>
+            <label><input type="checkbox" data-net="damage" checked> {{ __('Damages') }}</label>
         </div>
 
         <div class="iamap-stats">
             <span><strong id="map-stat-ias">—</strong> {{ __('IAs') }}</span>
             <span><strong id="map-stat-lots">—</strong> {{ __('lots') }}</span>
             <span><strong id="map-stat-ha">—</strong> {{ __('ha mapped') }}</span>
+            <span><strong id="map-stat-km">—</strong> {{ __('km of canal') }}</span>
         </div>
 
         <div class="iamap-wrap">
@@ -145,23 +162,26 @@ async function runMap() {
         return;
     }
 
-    const { ias, lots } = data;
+    const { ias } = data;
+    const lots = data.lots ?? { features: [] };
+    const net = data.net ?? { features: [] };
 
-    if (!lots.features.length) {
-        say('No map data yet. Import database/ia_map_lots.sql, then reload this page.');
+    if (!lots.features.length && !net.features.length) {
+        say('No map data yet. Import database/ia_map_lots.sql (or upload a map file on an IA profile), then reload this page.');
 
         return;
     }
 
-    // mapped area per IA (for the popup)
+    // mapped area per IA (for the popup); lot number = position of the lot within its IA (same order as the profile page)
     const mapped = {};
     lots.features.forEach((f) => {
         const m = (mapped[f.properties.i] ??= { lots: 0, ha: 0 });
         m.lots += 1;
         m.ha += f.properties.a;
+        f.properties.s = m.lots;
     });
 
-    const map = L.map(el, { preferCanvas: true, zoomControl: true });
+    const map = L.map(el, { renderer: L.canvas({ tolerance: 6 }), zoomControl: true });
     const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' });
     const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles &copy; Esri' });
     osm.addTo(map);
@@ -174,7 +194,9 @@ async function runMap() {
         province: document.getElementById('map-province'),
         iaStatus: document.getElementById('map-ia-status'),
         lotStatus: document.getElementById('map-lot-status'),
+        layers: document.getElementById('map-layers'),
         color: document.getElementById('map-color'),
+        labels: document.getElementById('map-labels'),
     };
 
     [...new Map(Object.values(ias).filter((i) => i.province_id).map((i) => [i.province_id, i.province])).entries()]
@@ -199,19 +221,19 @@ async function runMap() {
         return { color: on ? '#111827' : colorOf(feature.properties), weight: on ? 3 : 1, fillColor: colorOf(feature.properties), fillOpacity: on ? 0.8 : 0.5 };
     };
 
-    const matches = (feature) => {
-        const p = feature.properties;
+    const matchesIa = (p) => {
         const ia = ias[p.i];
         const q = f.search.value.trim().toLowerCase();
 
         if (!ia) return false;
         if (f.province.value && String(ia.province_id) !== f.province.value) return false;
         if (f.iaStatus.value && ia.status !== f.iaStatus.value) return false;
-        if (f.lotStatus.value && p.l !== f.lotStatus.value) return false;
         if (q && !`${ia.name} ${ia.code ?? ''} ${ia.cis ?? ''}`.toLowerCase().includes(q)) return false;
 
         return true;
     };
+
+    const matches = (feature) => matchesIa(feature.properties) && (!f.lotStatus.value || feature.properties.l === f.lotStatus.value);
 
     const popup = (feature) => {
         const p = feature.properties;
@@ -225,7 +247,7 @@ async function runMap() {
             <div>${esc(ia.province ?? '')}${p.m ? ` · ${esc(p.m)}` : ''}</div>
             <div>${esc(ia.status_label)} · ${esc(systems)}</div>
             <hr style="margin:.35rem 0;border:0;border-top:1px solid #e4e4e7">
-            <div><strong>This lot:</strong> ${num(p.a, 4)} ha · ${esc(lotLabels[p.l] ?? p.l)}${p.n ? ` (${esc(p.n)})` : ''}</div>
+            <div><strong>Lot #${p.s}:</strong> ${num(p.a, 4)} ha · ${esc(lotLabels[p.l] ?? p.l)}${p.n ? ` (${esc(p.n)})` : ''}</div>
             <div><strong>Mapped:</strong> ${m.lots} lots · ${num(m.ha)} ha${ia.service_area != null ? ` of ${num(ia.service_area)} ha service area` : ''}</div>
             <div style="margin-top:.35rem"><a href="${esc(ia.url)}">Open IA profile &rarr;</a></div>
         </div>`;
@@ -251,6 +273,93 @@ async function runMap() {
         }
     }, 0));
 
+    // --- lot labels (area / number), drawn only for lots in view (zoom 14 or closer, at most 250 at a time)
+    const labelLayer = L.layerGroup().addTo(map);
+
+    const drawLabels = () => {
+        labelLayer.clearLayers();
+        const mode = f.labels.value;
+
+        if (!mode || map.getZoom() < 14) return;
+
+        const view = map.getBounds();
+        let n = 0;
+
+        layer.eachLayer((lyr) => {
+            if (n >= 250 || !view.intersects(lyr.getBounds())) return;
+
+            const p = lyr.feature.properties;
+            const text = mode === 'area' ? `${num(p.a)} ha` : mode === 'number' ? `#${p.s}` : `#${p.s} · ${num(p.a)} ha`;
+
+            L.marker(lyr.getBounds().getCenter(), { interactive: false, keyboard: false, icon: L.divIcon({ className: 'iamap-label', html: `<span>${esc(text)}</span>`, iconSize: [0, 0] }) }).addTo(labelLayer);
+            n += 1;
+        });
+    };
+
+    // --- canal network (lines and points)
+    const NET = {
+        kinds: { canal: 'Canal', structure: 'Structure', dam: 'Dam / intake', damage: 'Damage (for repair)' },
+        point: { structure: { r: 4, fill: '#ffffff', stroke: '#111827' }, dam: { r: 8, fill: '#7c3aed', stroke: '#ffffff' }, damage: { r: 6, fill: '#dc2626', stroke: '#ffffff' } },
+        canal: (g) => (/^DA\b/i.test(g ?? '') ? '#ea580c' : '#2563eb'),
+    };
+    const netOn = () => Object.fromEntries([...f.layers.querySelectorAll('[data-net]')].map((c) => [c.dataset.net, c.checked]));
+    let showStructures = true;
+
+    const netPopup = (p) => {
+        const ia = ias[p.i];
+
+        return `<div class="iamap-pop">
+            <h4>${esc(p.n ?? NET.kinds[p.k])}</h4>
+            <div class="muted">${esc(NET.kinds[p.k] ?? p.k)}${p.g ? ` · ${esc(p.g)}` : ''}${p.m > 0 ? ` · ${num(p.m, 0)} m` : ''}</div>
+            <div>${esc(ia?.name ?? '')}</div>
+            <div style="margin-top:.35rem"><a href="${esc(ia?.url ?? '#')}">Open IA profile &rarr;</a></div>
+        </div>`;
+    };
+
+    const netLayer = L.geoJSON(null, {
+        style: (feature) => {
+            const p = feature.properties;
+
+            return p.k === 'damage'
+                ? { color: '#dc2626', weight: 5, opacity: 0.9, dashArray: '6 6' }
+                : { color: NET.canal(p.g), weight: 3, opacity: 0.95 };
+        },
+        pointToLayer: (feature, latlng) => {
+            const s = NET.point[feature.properties.k] ?? NET.point.structure;
+
+            return L.circleMarker(latlng, { radius: s.r, fillColor: s.fill, color: s.stroke, weight: 1.5, fillOpacity: 1 });
+        },
+        onEachFeature: (feature, lyr) => {
+            lyr.bindTooltip(esc(feature.properties.n ?? NET.kinds[feature.properties.k]), { sticky: true });
+            lyr.on('click', (event) => {
+                L.DomEvent.stopPropagation(event);
+                L.popup({ maxWidth: 320 }).setLatLng(event.latlng).setContent(netPopup(feature.properties)).openOn(map);
+            });
+        },
+    }).addTo(map);
+
+    const netShown = () => {
+        const on = netOn();
+
+        return net.features.filter((x) => matchesIa(x.properties) && on[x.properties.k] && (x.properties.k !== 'structure' || showStructures));
+    };
+
+    const drawNet = () => {
+        netLayer.clearLayers();
+        netLayer.addData({ type: 'FeatureCollection', features: netShown() });
+        netLayer.eachLayer((l) => l.bringToFront && l.bringToFront());
+    };
+
+    // structures are many small points: only draw them when zoomed in
+    const syncStructures = () => {
+        const want = map.getZoom() >= 15;
+
+        if (want !== showStructures) {
+            showStructures = want;
+            drawNet();
+        }
+    };
+
     // --- legend
     const legend = L.control({ position: 'bottomright' });
     legend.onAdd = () => L.DomUtil.create('div', 'iamap-legend');
@@ -262,7 +371,18 @@ async function runMap() {
             : mode === 'system' ? Object.entries(COLORS.system).map(([k, c]) => [SYSTEM_LABELS[k], c])
                 : Object.entries(COLORS.lot).map(([k, c]) => [lotLabels[k] ?? k, c]);
 
-        legend.getContainer().innerHTML = entries.map(([label, c]) => `<div><i style="background:${c}"></i>${esc(label)}</div>`).join('');
+        let html = entries.map(([label, c]) => `<div><i style="background:${c}"></i>${esc(label)}</div>`).join('');
+
+        if (net.features.length) {
+            html += `<hr style="margin:.3rem 0;border:0;border-top:1px solid #e4e4e7">
+                <div><i style="background:#2563eb;height:.25rem;vertical-align:3px"></i>Canal (NIA)</div>
+                <div><i style="background:#ea580c;height:.25rem;vertical-align:3px"></i>Canal (DA)</div>
+                <div><i style="background:#fff;border:2px solid #111827;border-radius:50%;width:.6rem;height:.6rem"></i>Structure</div>
+                <div><i style="background:#7c3aed;border-radius:50%"></i>Dam / intake</div>
+                <div><i style="background:#dc2626;border-radius:50%"></i>Damage</div>`;
+        }
+
+        legend.getContainer().innerHTML = html;
     };
 
     // --- render
@@ -274,24 +394,39 @@ async function runMap() {
         document.getElementById('map-stat-ias').textContent = num(new Set(shown.map((x) => x.properties.i)).size, 0);
         document.getElementById('map-stat-lots').textContent = num(shown.length, 0);
         document.getElementById('map-stat-ha').textContent = num(shown.reduce((s, x) => s + x.properties.a, 0));
-        say(shown.length ? '' : 'No lots match these filters.');
+
+        f.layers.hidden = !net.features.length;
+        const canals = net.features.filter((x) => x.properties.k === 'canal' && matchesIa(x.properties));
+        document.getElementById('map-stat-km').textContent = num(canals.reduce((s, x) => s + x.properties.m, 0) / 1000);
+        drawNet();
+        drawLabels();
+
+        say(shown.length || netShown().length ? '' : 'Nothing matches these filters.');
         drawLegend();
 
-        if (fit && shown.length) {
-            map.fitBounds(layer.getBounds(), { padding: [20, 20], maxZoom: 16 });
+        if (fit) {
+            const b = L.latLngBounds([]);
+            if (shown.length) b.extend(layer.getBounds());
+            if (netLayer.getLayers().length) b.extend(netLayer.getBounds());
+            if (b.isValid()) map.fitBounds(b, { padding: [20, 20], maxZoom: 16 });
         }
     };
 
     [f.province, f.iaStatus, f.lotStatus].forEach((s) => s.addEventListener('change', () => render()));
     f.search.addEventListener('input', () => render());
+    f.layers.addEventListener('change', drawNet);
+    map.on('zoomend', syncStructures);
+    map.on('moveend', drawLabels);
+    f.labels.addEventListener('change', drawLabels);
     f.color.addEventListener('change', () => { layer.setStyle(style); drawLegend(); });
     document.getElementById('map-reset').addEventListener('click', () => {
-        f.search.value = f.province.value = f.iaStatus.value = f.lotStatus.value = '';
+        f.search.value = f.province.value = f.iaStatus.value = f.lotStatus.value = f.labels.value = '';
         f.color.value = 'lot';
         render();
     });
 
     render();
+    syncStructures();
     say('');
     setTimeout(() => map.invalidateSize(), 150);
 
@@ -300,13 +435,17 @@ async function runMap() {
 
     if (focus && ias[focus]) {
         const own = lots.features.filter((x) => x.properties.i === focus);
-        const bounds = L.geoJSON({ type: 'FeatureCollection', features: own }).getBounds();
+        const ownNet = net.features.filter((x) => x.properties.i === focus);
+        const bounds = L.geoJSON({ type: 'FeatureCollection', features: [...own, ...ownNet] }).getBounds();
 
         if (bounds.isValid()) {
             map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 });
-            selected = focus;
-            layer.setStyle(style);
-            L.popup({ maxWidth: 340 }).setLatLng(bounds.getCenter()).setContent(popup(own[0])).openOn(map);
+
+            if (own.length) {
+                selected = focus;
+                layer.setStyle(style);
+                L.popup({ maxWidth: 340 }).setLatLng(bounds.getCenter()).setContent(popup(own[0])).openOn(map);
+            }
         }
     }
 }

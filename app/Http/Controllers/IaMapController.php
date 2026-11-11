@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\IaMapFeature;
 use App\Models\IaMapLot;
 use App\Models\IaProfile;
 use Illuminate\Http\Request;
@@ -63,7 +64,37 @@ class IaMapController extends Controller
             'm' => $l->municity,
         ], JSON_UNESCAPED_UNICODE).',"geometry":'.$l->geometry.'}')->implode(',');
 
-        $json = '{"ias":'.json_encode($ias, JSON_UNESCAPED_UNICODE).',"lots":{"type":"FeatureCollection","features":['.$features.']}}';
+        $net = IaMapFeature::query()
+            ->select(['id', 'ia_profile_id', 'kind', 'name', 'group_name', 'length_m', 'geometry'])
+            ->orderBy('id')
+            ->get();
+
+        $netFeatures = $net->map(fn (IaMapFeature $n) => '{"type":"Feature","properties":'.json_encode([
+            'i' => $n->ia_profile_id,
+            'k' => $n->kind,
+            'n' => $n->name,
+            'g' => $n->group_name,
+            'm' => (float) $n->length_m,
+        ], JSON_UNESCAPED_UNICODE).',"geometry":'.$n->geometry.'}')->implode(',');
+
+        // IAs that only have a canal network (no lots yet) are listed too
+        $missing = $net->pluck('ia_profile_id')->unique()->diff(array_keys($ias));
+        if ($missing->isNotEmpty()) {
+            foreach (IaProfile::query()->with('province:id,name')->whereIn('id', $missing)->get() as $p) {
+                $ias[$p->id] = [
+                    'name' => $p->ia_name, 'code' => $p->ia_code, 'cis' => $p->cis_name,
+                    'province' => $p->province?->name, 'province_id' => $p->province_id,
+                    'systems' => $p->systems(), 'status' => $p->status,
+                    'status_label' => IaProfile::STATUSES[$p->status] ?? $p->status,
+                    'service_area' => $p->service_area_ha !== null ? (float) $p->service_area_ha : null,
+                    'url' => route('ia-profiles.show', $p),
+                ];
+            }
+        }
+
+        $json = '{"ias":'.json_encode($ias, JSON_UNESCAPED_UNICODE)
+            .',"lots":{"type":"FeatureCollection","features":['.$features.']}'
+            .',"net":{"type":"FeatureCollection","features":['.$netFeatures.']}}';
 
         return response($json, 200, ['Content-Type' => 'application/json']);
     }

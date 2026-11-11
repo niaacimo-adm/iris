@@ -150,6 +150,10 @@ class IaProfileController extends Controller
             'canDelete'   => ! $archived && $me->hasPermission('ia.delete'),
             'canRestore'  => $archived && $me->hasPermission('ia.delete'),
             'lipaSummary' => $lipaSummary,
+            'netInfo'     => \App\Models\IaMapFeature::where('ia_profile_id', $iaProfile->id)
+                ->selectRaw("COUNT(*) AS items, SUM(CASE WHEN kind = 'canal' THEN length_m ELSE 0 END) AS canal_m, MAX(updated_at) AS updated")->first(),
+            'lotRows'     => \App\Models\IaMapLot::where('ia_profile_id', $iaProfile->id)
+                ->select(['id', 'area_ha', 'lot_status', 'municity', 'lot_name'])->orderBy('id')->get(),
             'mapInfo'     => \App\Models\IaMapLot::where('ia_profile_id', $iaProfile->id)
                 ->selectRaw('COUNT(*) AS lots, SUM(area_ha) AS ha, MAX(updated_at) AS updated, MAX(source) AS source')->first(),
             'deleteMode'  => IaAccess::canApproveDeletion($me) ? 'direct' : 'request',
